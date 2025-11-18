@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF',
+                        storm: '#0F172A',
+                        light: '#F8FAFC',
+                        accent: '#3B82F6',
+                        highlight: '#DC2626',
+                        success: '#10B981'
+                    },
+                    fontFamily: {
+                        nunito: ['Nunito', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* 全局样式重置 */
+        html, body {
+            height: 100%;
+            overflow: hidden; /* 禁止页面滚动 */
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* 背景图 - 动态切换 */
+        .main-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('img/qianqing.jpg'); /* 默认：前情故事背景 */
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            opacity: 0.8;
+            transition: background-image 0.5s ease-in-out; /* 平滑过渡效果 */
+        }
+
+        /* 不同阶段的背景图 */
+        .main-background.stage-intro {
+            background-image: url('img/qianqing.jpg'); /* 前情故事 */
+        }
+
+        .main-background.stage-before {
+            background-image: url('img/1-5.png'); /* 台风之前 (1-5题) */
+        }
+
+        .main-background.stage-during {
+            background-image: url('img/6-11.png'); /* 台风来临时 (6-11题) */
+        }
+
+        .main-background.stage-after {
+            background-image: url('img/12-18.png'); /* 台风之后 (12-18题及结束页面) */
+        }
+        
+        /* 固定标题 */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 0;
+            background-color: rgba(248, 250, 252, 0.98);
+            z-index: 100;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(5px);
+        }
+        
+        /* 内容容器 - 居中且不滚动 */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 100px 20px 60px; /* 适配标题栏高度 */
+            position: relative;
+            z-index: 2;
+            box-sizing: border-box;
+        }
+        
+        /* 引言部分样式 */
+        .intro-container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        /* 主内容布局 - 并排显示手机和文字 */
+        .main-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        .story-text {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 2;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background-color: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(3px);
+            text-indent: 2em;
+            max-width: 550px;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.1rem;
+            background-color: #1E40AF;
+            margin-left: 3px;
+            animation: blink 1s step-end infinite;
+        }
+        
+        .click-hint {
+            color: #1E40AF;
+            opacity: 0.7;
+            animation: pulse 2s infinite;
+            font-size: 0.9rem;
+            background-color: rgba(248, 250, 252, 0.85);
+            padding: 5px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(3px);
+        }
+        
+        /* 问题卡片样式 */
+        .question-section {
+            display: none; /* 初始隐藏问题部分 */
+            width: 100%;
+            max-width: 700px;
+            margin-top: 40px; /* 向下移动，给进度文字留出空间 */
+        }
+        
+        .question-card {
+            width: 100%;
+            background-color: rgba(248, 250, 252, 0.9);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .question-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        /* 选项样式 */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .option {
+            background-color: white;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .option:hover {
+            border-color: #3B82F6;
+            transform: translateX(5px);
+        }
+        
+        .option.selected {
+            border-color: #1E40AF;
+            background-color: rgba(30, 64, 175, 0.05);
+        }
+        
+        .option-letter {
+            font-weight: bold;
+            margin-right: 15px;
+            color: #1E40AF;
+            min-width: 20px;
+        }
+        
+        /* 反馈弹窗 */
+        .feedback-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .feedback-modal.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .feedback-content {
+            background-color: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .feedback-modal.visible .feedback-content {
+            transform: translateY(0);
+        }
+        
+        .feedback-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .feedback-error {
+            color: #DC2626;
+        }
+        
+        .feedback-success {
+            color: #10B981;
+        }
+        
+        .feedback-message {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        
+        /* 案例样式优化 - 加大字体，去除标题 */
+        .case-example {
+            background-color: rgba(30, 64, 175, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.1rem; /* 加大案例字体 */
+            line-height: 1.8;
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        
+        .case-example u {
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+            color: #DC2626;
+        }
+        
+        .continue-btn {
+            background-color: #1E40AF;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .continue-btn:hover {
+            background-color: #1E3A8A;
+            transform: translateY(-2px);
+        }
+        
+        /* 进度指示器 */
+        .progress-container {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .progress-text {
+            color: #1E40AF;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        /* 响应式字体大小 */
+        @media (max-width: 768px) {
+            .progress-text {
+                font-size: 0.85rem;
+            }
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #E0E7FF;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #1E40AF;
+            transition: width 0.3s ease;
+        }
+        
+        /* 阶段标题 */
+        .stage-title {
+            color: #1E40AF;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        /* 手机界面 - 与文字并排 */
+        .phone-wrapper {
+            width: 280px;
+            flex-shrink: 0; /* 防止手机框被压缩 */
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            transform: translateY(20px);
+        }
+        
+        .phone-wrapper.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* 中央按钮 */
+        .central-button {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 101;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .central-button.visible {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+        
+        /* 文字区域容器 */
+        .text-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* 完成页面样式 */
+        .completion-section {
+            display: none;
+            max-width: 700px;
+            width: 100%;
+            background-color: rgba(248, 250, 252, 0.9);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        .completion-title {
+            font-size: 1.8rem;
+            color: #10B981;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+        
+        .completion-message {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        
+        .completion-important {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #DC2626;
+            margin-bottom: 35px;
+            line-height: 2;
+        }
+        
+        .project-info {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            line-height: 1.4; /* 缩小行距 */
+            color: #6B7280;
+        }
+        
+        .team-members, .advisors, .contact-info {
+            color: #6B7280;
+            font-size: 0.9rem;
+            margin-bottom: 8px; /* 缩小行间距 */
+            line-height: 1.3; /* 缩小行距 */
+        }
+        
+        /* 动画 */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.7; transform: scale(1); }
+        }
+        
+        /* 语言切换按钮 */
+        .language-toggle {
+            position: fixed;
+            top: 80px;
+            right: 30px;
+            z-index: 101;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .language-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .language-toggle:active {
+            transform: translateY(0);
+        }
+
+        /* 返回按钮 */
+        .back-button {
+            position: fixed;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 101;
+            background: #bababa;
+            color: #000000;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(186, 186, 186, 0.4);
+            transition: all 0.3s ease;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-button.visible {
+            display: flex;
+        }
+
+        .back-button:hover {
+            transform: translateY(-50%) translateX(-5px);
+            box-shadow: 0 6px 20px rgba(186, 186, 186, 0.6);
+            background: #a0a0a0;
+        }
+
+        .back-button:active {
+            transform: translateY(-50%) translateX(0);
+        }
+
+
+
+        /* 响应式调整 */
+        @media (max-width: 850px) {
+            .main-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .phone-wrapper {
+                order: -1; /* 手机在上方 */
+                margin-bottom: 10px;
+            }
+            .story-text {
+                font-size: 1rem;
+                max-width: 100%;
+                line-height: 1.8;
+                padding: 15px;
+            }
+            .content-container {
+                padding: 90px 15px 50px;
+            }
+            .question-card {
+                padding: 20px;
+            }
+            .question-title {
+                font-size: 1.1rem;
+            }
+            .option {
+                font-size: 1rem;
+                padding: 12px 15px;
+            }
+            .case-example {
+                font-size: 1rem;
+            }
+            .completion-section {
+                padding: 25px 20px;
+            }
+            .completion-title {
+                font-size: 1.5rem;
+            }
+            .completion-message, .completion-important {
+                font-size: 1rem;
+            }
+            .project-info, .team-members, .advisors, .contact-info {
+                font-size: 0.85rem;
+            }
+            .language-toggle {
+                top: 70px;
+                right: 15px;
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+            .back-button {
+                left: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 背景图 - 动态切换 -->
+    <div id="main-background" class="main-background stage-intro"></div>
+
+    <!-- 语言切换按钮 -->
+    <button id="language-toggle" class="language-toggle">
+        <i class="fa fa-globe"></i>
+        <span id="language-text">English</span>
+    </button>
+
+    <!-- 返回按钮 -->
+    <button id="back-button" class="back-button">
+        <i class="fa fa-arrow-left"></i>
+    </button>
+
+    <!-- 固定标题 - 已更新副标题 -->
+    <div class="fixed-header text-center">
+        <h1 class="text-[clamp(1.5rem,4vw,2.2rem)] font-bold text-primary mb-2">如果能重生到台风之前——</h1>
+        <p class="text-neutral italic text-sm md:text-base">Integrating Disaster Risk Reduction into Curriculum & Learning</p>
+        <div class="w-24 h-1 bg-primary/30 mx-auto mt-3 rounded-full"></div>
+    </div>
+    
+    <!-- 主内容区 - 居中且不滚动 -->
+    <div class="content-container">
+        <!-- 引言部分 -->
+        <div class="intro-container" id="intro-container">
+            <div class="main-content">
+                <!-- 手机界面 - 左侧显示（并排） -->
+                <div id="phone-container" class="phone-wrapper">
+                    <div class="max-w-[280px] mx-auto">
+                        <div class="border-4 border-storm/90 rounded-[42px] overflow-hidden shadow-[0_10px_50px_rgba(0,0,0,0.15)]">
+                            <!-- 手机内容 -->
+                            <div class="bg-storm h-5 flex items-center justify-center">
+                                <div class="w-16 h-1 bg-storm-700 rounded-full"></div>
+                            </div>
+                            <div class="bg-white h-[580px] relative">
+                                <div class="bg-white h-6 px-5 flex justify-between items-center text-xs text-storm/80">
+                                    <span id="phone-date" class="font-medium text-danger">7月15日 9:41</span>
+                                    <div class="flex items-center gap-[6px]">
+                                        <i class="fa fa-signal"></i>
+                                        <i class="fa fa-wifi"></i>
+                                        <i class="fa fa-battery-full"></i>
+                                    </div>
+                                </div>
+                                <div class="h-[calc(100%-56px)] overflow-y-auto p-4" style="scrollbar-width: none;">
+                                    <div class="flex items-start gap-3 mb-4 pb-3 border-b border-gray-100">
+                                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-danger mt-0.5 animate-pulse">
+                                            <i class="fa fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between">
+                                                <h3 id="phone-sender" class="font-bold">市应急管理局</h3>
+                                                <p id="phone-time" class="text-xs text-gray-500">刚刚</p>
+                                            </div>
+                                            <p id="phone-title" class="text-sm text-gray-700 mt-1">台风预警通知（一周后可能登陆）</p>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="bg-red-50 border-l-4 border-danger p-3 rounded-r">
+                                            <p id="phone-warning-level" class="font-bold text-danger text-base">台风蓝色预警信号</p>
+                                            <p id="phone-warning-time" class="text-gray-600">市气象台7月15日9时发布</p>
+                                        </div>
+                                        <p id="phone-warning-content">据最新监测，今年第12号台风"海燕"正在形成，预计7月22日前后可能影响我市，请市民提前做好关注和准备。</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white h-11 border-t border-gray-100 flex justify-center items-start pt-3">
+                                    <div class="w-16 h-1 bg-gray-300 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧文字内容 -->
+                <div class="text-section">
+                    <div id="text-container" class="story-text"></div>
+                    <div class="click-hint">
+                        点击继续 <i class="fa fa-hand-pointer-o"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中央按钮 -->
+            <div class="central-button" id="central-button">
+                <button id="start-btn" class="bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-lg text-lg">
+                    人生继续…… <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 问题部分 -->
+        <div class="question-section" id="question-section">
+            <!-- 进度指示器 -->
+            <div class="progress-container">
+                <div class="progress-text">
+                    <span id="current-question">第 1 题</span> / <span id="total-questions">共 18 题</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 5%"></div>
+                </div>
+            </div>
+            
+            <!-- 阶段标题 -->
+            <h2 id="stage-title" class="stage-title">台风来临前</h2>
+            
+            <!-- 问题卡片 -->
+            <div class="question-card">
+                <div id="question-title" class="question-title"></div>
+                <div id="options-container" class="options-container"></div>
+            </div>
+        </div>
+        
+        <!-- 完成全部题目后的页面 -->
+        <div class="completion-section" id="completion-section">
+            <h2 class="completion-title">恭喜您完成本次重生游戏！</h2>
+            <p class="completion-message">希望在您将来如果遇到台风的话，这些知识能帮助到您。</p>
+            <p class="completion-important">
+                切记！切记！<br>
+                人在灾难面前如此渺小，请不要蔑视自然！<br>
+                人生不可重来！
+            </p>
+            <p class="project-info">本项目由西交利物浦未来教育学院和南非德班理工大学(Durban University of Technology)联合创造。</p>
+            <p class="team-members">项目成员：Xinyu Wang, Ayanda, Mthobisi</p>
+            <p class="advisors">指导老师：Dr. Jian “Aaron” Chen & Mal Reddy</p>
+            <p class="contact-info">如有问题和建议，请联系：Jian.Chen02@xjtlu.edu.cn</p>
+        </div>
+    </div>
+    
+    <!-- 反馈弹窗 -->
+    <div id="feedback-modal" class="feedback-modal">
+        <div class="feedback-content">
+            <h3 id="feedback-title" class="feedback-title"></h3>
+            <p id="feedback-message" class="feedback-message"></p>
+            <div id="case-example" class="case-example hidden"></div>
+            <button id="feedback-continue" class="continue-btn">继续</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 背景元素
+            const mainBackground = document.getElementById('main-background');
+
+            // 引言部分元素
+            const introContainer = document.getElementById('intro-container');
+            const questionSection = document.getElementById('question-section');
+            const completionSection = document.getElementById('completion-section');
+            const textContainer = document.getElementById('text-container');
+            const phoneContainer = document.getElementById('phone-container');
+            const clickHint = document.querySelector('.click-hint');
+            const centralButton = document.getElementById('central-button');
+            const startBtn = document.getElementById('start-btn');
+            const languageToggle = document.getElementById('language-toggle');
+            const languageText = document.getElementById('language-text');
+            const backButton = document.getElementById('back-button');
+            let isTyping = false;
+            let currentIntroIndex = 0;
+            let currentLanguage = 'zh'; // 'zh' for Chinese, 'en' for English
+
+            // 问题部分元素
+            const questionTitleEl = document.getElementById('question-title');
+            const optionsContainerEl = document.getElementById('options-container');
+            const feedbackModalEl = document.getElementById('feedback-modal');
+            const feedbackTitleEl = document.getElementById('feedback-title');
+            const feedbackMessageEl = document.getElementById('feedback-message');
+            const caseExampleEl = document.getElementById('case-example');
+            const feedbackContinueBtn = document.getElementById('feedback-continue');
+            const currentQuestionEl = document.getElementById('current-question');
+            const progressFillEl = document.getElementById('progress-fill');
+            const stageTitleEl = document.getElementById('stage-title');
+            let currentQuestionIndex = 0;
+            let selectedOption = null;
+
+            // 背景切换函数
+            function changeBackground(stage) {
+                // 移除所有阶段class
+                mainBackground.classList.remove('stage-intro', 'stage-before', 'stage-during', 'stage-after');
+                // 添加新的阶段class
+                mainBackground.classList.add('stage-' + stage);
+            }
+            
+            // 翻译数据
+            const translations = {
+                zh: {
+                    title: "如果能重生到台风之前——",
+                    subtitle: "Integrating Disaster Risk Reduction into Curriculum & Learning",
+                    languageButton: "English",
+                    clickHint: "点击继续",
+                    startButton: "人生继续……",
+                    currentQuestion: "第",
+                    questionUnit: "题",
+                    totalQuestions: "共",
+                    questionsUnit: "题",
+                    correctTitle: "你成功回避了一次危险！",
+                    correctMessage: "正确的选择帮助你和家人远离了风险。",
+                    wrongTitle: "你的头感觉到一阵剧痛...",
+                    wrongMessage: "这是错误的选择，可能会导致危险！请重新思考。",
+                    continueButton: "继续",
+                    completionTitle: "恭喜您完成本次重生游戏！",
+                    completionMessage: "希望在您将来如果遇到台风的话，这些知识能帮助到您。",
+                    completionImportant: "切记！切记！<br>人在灾难面前如此渺小，请不要蔑视自然！<br>人生不可重来！",
+                    projectInfo: "本项目由西交利物浦未来教育学院和南非德班理工大学(Durban University of Technology)联合创造。",
+                    teamMembers: "项目成员：Xinyu Wang, Ayanda Mathunjwa, Mthobisi Nyawose",
+                    advisors: "指导老师：Dr. Jian \"Aaron\" Chen & Mal Reddy",
+                    contactInfo: "如有问题和建议，请联系：Jian.Chen02@xjtlu.edu.cn",
+                    story: [
+                        "你感觉到一阵不知名的痛楚席卷全身，在痛苦中挣扎着，突然大喘着气从梦中醒来。",
+                        "梦里你收到了台风预警。这是你第一次遇上台风，本以为是放假休息的时间。",
+                        "但梦中，你和家人在台风面前如同蝼蚁，因缺乏安全知识犯下可怕错误。",
+                        "全身已被冷汗浸湿，这个梦如此清晰，让你觉得真的死去了一般。",
+                        "但是现在……为什么……",
+                        "你看向手机，时间显示是一周之前！全新的台风通知映入眼帘。一定是临死前的祈祷起了作用，你重生了，有机会拯救所有人！",
+                        "看着预警信息，你下定决心，这次要运用所有知识，保护自己和家人！"
+                    ],
+                    stages: {
+                        before: "台风来临前",
+                        during: "台风来临时",
+                        after: "台风过后"
+                    },
+                    phone: {
+                        date: "7月15日 9:41",
+                        sender: "市应急管理局",
+                        time: "刚刚",
+                        title: "台风预警通知（一周后可能登陆）",
+                        warningLevel: "台风蓝色预警信号",
+                        warningTime: "市气象台7月15日9时发布",
+                        warningContent: "据最新监测，今年第12号台风\"海燕\"正在形成，预计7月22日前后可能影响我市，请市民提前做好关注和准备。"
+                    }
+                },
+                en: {
+                    title: "If I Could Be Reborn Before the Typhoon—",
+                    subtitle: "Integrating Disaster Risk Reduction into Curriculum & Learning",
+                    languageButton: "中文",
+                    clickHint: "Click to continue",
+                    startButton: "Life continues...",
+                    currentQuestion: "Question",
+                    questionUnit: "",
+                    totalQuestions: "Total",
+                    questionsUnit: "Questions",
+                    correctTitle: "You successfully avoided a danger!",
+                    correctMessage: "The right choice helped you and your family stay away from risks.",
+                    wrongTitle: "You feel a sharp pain in your head...",
+                    wrongMessage: "This is the wrong choice and may lead to danger! Please reconsider.",
+                    continueButton: "Continue",
+                    completionTitle: "Congratulations on completing this rebirth game!",
+                    completionMessage: "We hope this knowledge will help you if you encounter a typhoon in the future.",
+                    completionImportant: "Remember! Remember!<br>Humans are so small in the face of natural disasters, do not disdain nature!<br>Life cannot be restarted!",
+                    projectInfo: "This project is jointly created by Xi'an Jiaotong-Liverpool University's AoFE and Durban University of Technology (South Africa).",
+                    teamMembers: "Project members: Xinyu Wang, Ayanda Mathunjwa, Mthobisi Nyawose",
+                    advisors: "Advisor: Dr. Jian \"Aaron\" Chen & Mal Reddy",
+                    contactInfo: "For questions and suggestions, please contact: Jian.Chen02@xjtlu.edu.cn",
+                    story: [
+                        "You feel an unknown pain, struggling in pain, suddenly waking up gasping for breath from a dream.",
+                        "In the dream, you received a typhoon warning. It was your first time encountering a typhoon, and you thought it would be a holiday to rest.",
+                        "But in the dream, you and your family were like ants in the face of the typhoon, making terrible mistakes due to lack of safety knowledge.",
+                        "Your whole body was soaked in cold sweat. The dream was so vivid that you felt like you had actually died.",
+                        "But now... why...",
+                        "You look at your phone, and the time shows it's one week earlier! A new typhoon notice comes into view. It must be that your prayer before death worked - you've been reborn and have a chance to save everyone!",
+                        "Looking at the warning information, you make up your mind to use all your knowledge to protect yourself and your family this time!"
+                    ],
+                    stages: {
+                        before: "Before the Typhoon",
+                        during: "During the Typhoon",
+                        after: "After the Typhoon"
+                    },
+                    phone: {
+                        date: "July 15th 9:41",
+                        sender: "Municipal Emergency Management Bureau",
+                        time: "Just now",
+                        title: "Typhoon warning notice (possible landfall in one week)",
+                        warningLevel: "Typhoon Blue Warning Signal",
+                        warningTime: "Issued by Municipal Meteorological Observatory at 9:00 on July 15th",
+                        warningContent: "According to the latest monitoring, Typhoon \"Haiyan\", the 12th typhoon of this year, is forming and may affect our city around July 22nd. Citizens are requested to pay attention and make preparations in advance."
+                    }
+                }
+            };
+
+            // 引言剧情文字（使用中文作为默认）
+            let storyData = translations.zh.story;
+            
+            // 问题数据 - 中文版
+            const questionsZh = [
+                // 台风来临前
+                {
+                    stage: "台风来临前",
+                    question: "台风预警发布后，政府已划定山区为自然灾害危险区并禁止进入，此时个人应怎么做？（ ）",
+                    options: [
+                        "趁台风未到，抓紧进入山区徒步观景",
+                        "遵守禁令，绝不进入危险区域",
+                        "结伴进入，互相照应更安全",
+                        "选择低海拔区域短暂停留"
+                    ],
+                    answer: 1,
+                    case: '台风 "韦帕" 蓝色预警发布后，深圳两名游客<u>不顾禁令擅自登山被困</u>，虽被成功救援，但事后每人被依法处以 5000 元罚款，这是全国首张自然灾害综合法规罚单。'
+                },
+                {
+                    stage: "台风来临前",
+                    question: "居住在低洼地区且接到台风暴雨预警时，首要的准备行动是？（ ）",
+                    options: [
+                        "在家中储备大量零食和饮用水",
+                        "提前将贵重物品打包整理",
+                        "按通知向地势较高的安全区域转移",
+                        "加固门窗防止雨水渗入"
+                    ],
+                    answer: 2,
+                    case: '台风 "桦加沙" 引发强降雨导致多地积水，曾有低洼区域居民<u>因未及时转移，房屋被洪水围困</u>，虽最终获救但面临财产严重损失，而提前转移的居民则规避了风险。'
+                },
+                {
+                    stage: "台风来临前",
+                    question: "渔民接到台风预警信号后，正确的应对措施是？（ ）",
+                    options: [
+                        "加固渔船后留在船上看守",
+                        "加速出海赶在台风前完成捕鱼",
+                        "立即将渔船停靠岸边并撤离上岸",
+                        "驾船前往深海躲避台风"
+                    ],
+                    answer: 2,
+                    case: '"福景 001" 船在台风 "暹芭" 来临前，<u>未按要求及时让人员撤离上岸</u>，最终船舶遇险沉没，造成<u>25 人死亡、1 人失踪</u>的重大事故。'
+                },
+                {
+                    stage: "台风来临前",
+                    question: "台风来临前检查居家环境时，对空调室外机应采取何种措施？（ ）",
+                    options: [
+                        "无需处理，外机有防护设计",
+                        "用塑料布包裹防止进水",
+                        "检查并加固安装支架",
+                        "拆卸下来搬入室内"
+                    ],
+                    answer: 2,
+                    case: '台风期间强风常导致<u>未加固的空调室外机坠落</u>，曾有外机从高楼掉落砸中楼下车辆，虽未造成人员伤亡，但类似高空坠物若击中行人后果不堪设想，加固支架可有效规避此类风险。'
+                },
+                {
+                    stage: "台风来临前",
+                    question: "台风预警发布后，工地负责人接到人员撤离指令，正确的做法是？（ ）",
+                    options: [
+                        "认为工地设施牢固，无需撤离工人",
+                        "仅安排部分工人撤离，留少数人看守",
+                        "立即组织所有工人撤离至安全避难所",
+                        "等台风靠近后再决定是否撤离"
+                    ],
+                    answer: 2,
+                    case: '2003 年深圳某工地，项目负责人<u>无视台风预警和撤离要求，未将工人转移至安全区域</u>，最终因台风引发灾害造成<u>人员伤亡</u>，负责人被警方刑拘。'
+                },
+                
+                // 台风来临时
+                {
+                    stage: "台风来临时",
+                    question: '台风期间政府发布 "五停" 指令（停课、停工等），要求市民非必要不外出，个人应如何做？（ ）',
+                    options: [
+                        '骑电动车外出处理 "紧急事务"',
+                        "居家避险，不随意外出",
+                        "外出查看店铺受损情况",
+                        "到户外拍摄台风视频打卡"
+                    ],
+                    answer: 1,
+                    case: '台风 "桦加沙" 期间，东莞一名男子<u>无视 "五停" 指令执意骑电动车外出</u>，被狂风刮倒的大树砸中，导致<u>蛛网膜下腔出血、颅骨骨折，重伤昏迷</u>。'
+                },
+                {
+                    stage: "台风来临时",
+                    question: "台风导致户外积水严重，发现路面有不明积水时，正确的做法是？（ ）",
+                    options: [
+                        "快速蹚水通过节省时间",
+                        "用木棍试探水深后缓慢通过",
+                        "绕路而行或等待积水退去",
+                        "骑电动车加速冲过积水"
+                    ],
+                    answer: 2,
+                    case: '台风天积水常伴随窨井盖被冲掉、电线掉落漏电等隐患，曾有人因<u>盲目蹚水掉入缺失窨井盖的坑中受伤</u>，也有人因<u>接触积水里的漏电电线触电身亡</u>。'
+                },
+                {
+                    stage: "台风来临时",
+                    question: '台风天在海边，听到警方反复广播 "远离海滨区" 时，应采取的行动是？（ ）',
+                    options: [
+                        "留在岸边拍摄巨浪视频",
+                        "带孩子靠近岸边观浪打卡",
+                        "立即撤离至远离海岸的安全地带",
+                        "待在岸边低洼处躲避风雨"
+                    ],
+                    answer: 2,
+                    case: '台风 "桦加沙" 期间，香港两名女子<u>带 8 岁男童无视警示到岸边观浪</u>，被巨浪冲倒致<u>男童手脚擦伤</u>，两名女子因涉嫌 "对所看管儿童虐待或忽略" 被警方拘捕。'
+                },
+                {
+                    stage: "台风来临时",
+                    question: "台风导致家中停电，使用柴油发电机供电时，下列做法正确的是？（ ）",
+                    options: [
+                        "放在客厅方便接线使用",
+                        "置于密封的阳台防止淋雨",
+                        "放在通风的户外或露台",
+                        "搬进卧室夜间便于查看"
+                    ],
+                    answer: 2,
+                    case: '台风 "麦德姆" 期间，广东湛江一户人家因停电使用柴油发电机，<u>未注意通风将其放在室内</u>，导致<u>一家七口煤气中毒，其中 1 人死亡，6 人住院治疗</u>，通风不良是此类事故的主要诱因。'
+                },
+                {
+                    stage: "台风来临时",
+                    question: "台风过境时在室内，发现窗外广告牌摇晃剧烈，应立即怎么做？（ ）",
+                    options: [
+                        "靠近窗户拍摄视频记录",
+                        "迅速撤离至远离窗户的内墙边",
+                        "打电话通知物业前来处理",
+                        "打开窗户观察广告牌情况"
+                    ],
+                    answer: 1,
+                    case: '台风期间常有广告牌被强风刮落，曾有广告牌坠落砸穿居民窗户，<u>玻璃碎片飞溅导致室内人员划伤</u>，远离窗户可避免被坠落物及碎玻璃伤害。'
+                },
+                {
+                    stage: "台风来临时",
+                    question: "台风导致山区出现山洪预警，正在山间小路行走的人应如何逃生？（ ）",
+                    options: [
+                        "沿山谷顺水流方向向下游跑",
+                        "向山谷两侧的高处陡坡攀爬",
+                        "躲进山谷中的山洞暂避",
+                        "原地等待山洪过后再离开"
+                    ],
+                    answer: 1,
+                    case: '2023 年台风 "海葵" 引发福建永泰县山洪，消防救援人员在处置时<u>突遇山洪暴发</u>，虽经奋力救援仍有<u>队员牺牲</u>，此类案例警示山洪中需向高处转移避险。'
+                },
+                
+                // 台风过后
+                {
+                    stage: "台风过后",
+                    question: "台风过后发现道路旁的大树有明显倾斜，正确的处理方式是？（ ）",
+                    options: [
+                        "靠近观察树干断裂情况",
+                        "绕行远离并拨打应急电话",
+                        "组织路人合力将树扶正",
+                        "无视风险正常通行"
+                    ],
+                    answer: 1,
+                    case: '台风过后常有树木因根部松动倾斜，曾有倾斜树木在后续微风中突然倒伏，<u>砸中路过的电动车骑手致其受伤</u>，及时上报而非靠近查看可规避风险。'
+                },
+                {
+                    stage: "台风过后",
+                    question: "台风后参与户外清理工作，发现积水下方有窨井盖缺失，应首先做什么？（ ）",
+                    options: [
+                        "跳入积水寻找窨井盖位置",
+                        "在周边设置警示标识提醒路人",
+                        "等待市政人员自行发现",
+                        "用树枝简单遮挡后离开"
+                    ],
+                    answer: 1,
+                    case: '台风导致的积水常掩盖缺失的窨井盖，曾有人因<u>未察觉隐患蹚水掉入深达 10 多米的窨井中</u>，最终<u>不幸身亡</u>，设置警示标识是防止他人遇险的关键步骤。'
+                },
+                {
+                    stage: "台风过后",
+                    question: "台风后复工，建筑工人进入曾被洪水浸泡的工地，首要操作是？（ ）",
+                    options: [
+                        "立即开始清理施工材料",
+                        "检查施工设备漏电情况",
+                        "整理被冲乱的施工场地",
+                        "更换被浸湿的工作服"
+                    ],
+                    answer: 1,
+                    case: '洪水浸泡后的电气设备极易漏电，曾有工地复工时，工人<u>未检查就触碰受潮的施工机械</u>，导致<u>触电受伤</u>，先排查漏电风险是复工前的必要安全措施。'
+                },
+                {
+                    stage: "台风过后",
+                    question: "台风过后发现户外有掉落的电线，正确的处理方式是？（ ）",
+                    options: [
+                        "用绝缘木棍将电线挑到路边",
+                        "靠近查看电线是否仍带电",
+                        "远离现场并立即拨打电力部门电话",
+                        "通知邻居共同清理现场"
+                    ],
+                    answer: 2,
+                    case: '台风 "贝碧嘉" 过境时，江苏昆山一处 10 千伏线路导线落地，两名途经居民<u>因靠近接触</u>而<u>触电身亡</u>，此类事故均因未远离漏电电线且未及时报警导致。'
+                },
+                {
+                    stage: "台风过后",
+                    question: "台风过后进入被洪水浸泡过的房屋，首要注意的事项是？（ ）",
+                    options: [
+                        "检查家中财物是否丢失",
+                        "先切断电源再进入室内",
+                        "立即清理地面积水",
+                        "查看墙面和家具损坏情况"
+                    ],
+                    answer: 1,
+                    case: '浙江岱山曾有台风导致强降雨，雨水漫进房屋淹没卧室床下的接线板，因<u>未先切断电源</u>，屋内一对李姓兄弟<u>触电身亡</u>，此类漏电风险在洪水浸泡后极为常见。'
+                },
+                {
+                    stage: "台风过后",
+                    question: "台风刚过，海上风浪尚未完全平息，此时个人应怎么做？（ ）",
+                    options: [
+                        "趁天气转晴下海游泳",
+                        "乘坐渔船出海捕鱼",
+                        "远离海边，不擅自下水",
+                        "到海边捡拾海浪冲来的物品"
+                    ],
+                    answer: 2,
+                    case: '海南三亚一名男子在台风刚过、海上风浪较大时，<u>不顾劝阻执意下海游泳</u>，最终<u>不幸溺水身亡</u>，尽管群众和医护人员全力救援仍未能挽回生命。'
+                },
+                {
+                    stage: "台风过后",
+                    question: '台风期间政府发布 "五停" 指令（停课、停工等），要求市民非必要不外出，个人应如何做？（ ）',
+                    options: [
+                        '骑电动车外出处理 "紧急事务"',
+                        "居家避险，不随意外出",
+                        "外出查看店铺受损情况",
+                        "到户外拍摄台风视频打卡"
+                    ],
+                    answer: 1,
+                    case: '台风 "桦加沙" 期间，东莞一名男子<u>无视 "五停" 指令执意骑电动车外出</u>，被狂风刮倒的大树砸中，导致<u>蛛网膜下腔出血、颅骨骨折，重伤昏迷</u>。'
+                }
+            ];
+
+            // 问题数据 - 英文版
+            const questionsEn = [
+                {
+                    stage: "Before the Typhoon",
+                    question: "After a typhoon warning is issued and the government has designated mountainous areas as natural disaster danger zones and prohibited entry, what should individuals do? ( )",
+                    options: [
+                        "Take advantage of the time before the typhoon arrives to hike in the mountains",
+                        "Obey the ban and never enter dangerous areas",
+                        "Enter with companions for mutual support and safety",
+                        "Choose low-altitude areas for brief stays"
+                    ],
+                    answer: 1,
+                    case: 'After Typhoon "Wipha" blue warning was issued, two tourists in Shenzhen <u>ignored the ban and climbed the mountain, getting trapped</u>. Although successfully rescued, each was fined 5,000 yuan according to law, marking the first penalty under comprehensive natural disaster regulations nationwide.'
+                },
+                {
+                    stage: "Before the Typhoon",
+                    question: "When living in a low-lying area and receiving a typhoon rainstorm warning, what is the primary preparatory action? ( )",
+                    options: [
+                        "Stock up on snacks and drinking water at home",
+                        "Pack and organize valuable items in advance",
+                        "Transfer to higher and safer areas as notified",
+                        "Reinforce doors and windows to prevent rainwater infiltration"
+                    ],
+                    answer: 2,
+                    case: 'Typhoon "Chaba" triggered heavy rainfall causing flooding in many areas. Some residents in low-lying areas <u>failed to evacuate in time and their houses were surrounded by floods</u>. Although eventually rescued, they faced serious property losses, while residents who evacuated in advance avoided the risks.'
+                },
+                {
+                    stage: "Before the Typhoon",
+                    question: "After receiving a typhoon warning signal, what is the correct response for fishermen? ( )",
+                    options: [
+                        "Reinforce the fishing boat and stay on board to guard it",
+                        "Speed up going to sea to complete fishing before the typhoon",
+                        "Immediately dock the fishing boat and evacuate to shore",
+                        "Sail to deep sea to avoid the typhoon"
+                    ],
+                    answer: 2,
+                    case: 'Before Typhoon "Chanthu" arrived, the "Fujing 001" vessel <u>failed to evacuate personnel to shore as required</u>. The ship eventually encountered danger and sank, resulting in a major accident with <u>25 deaths and 1 missing person</u>.'
+                },
+                {
+                    stage: "Before the Typhoon",
+                    question: "When checking the home environment before a typhoon, what measures should be taken for outdoor air conditioning units? ( )",
+                    options: [
+                        "No action needed, outdoor units have protective design",
+                        "Wrap with plastic sheets to prevent water ingress",
+                        "Check and reinforce installation brackets",
+                        "Dismantle and move indoors"
+                    ],
+                    answer: 2,
+                    case: 'During typhoons, strong winds often cause <u>unreinforced outdoor air conditioning units to fall</u>. There have been cases where outdoor units fell from high buildings and hit vehicles below. Although no casualties occurred, if such falling objects hit pedestrians, the consequences would be unimaginable. Reinforcing brackets can effectively avoid such risks.'
+                },
+                {
+                    stage: "Before the Typhoon",
+                    question: "After a typhoon warning is issued, when a construction site manager receives an evacuation order, what is the correct action? ( )",
+                    options: [
+                        "Believe the site facilities are solid and no worker evacuation is needed",
+                        "Only arrange partial worker evacuation, leaving a few to guard",
+                        "Immediately organize all workers to evacuate to safe shelters",
+                        "Wait until the typhoon approaches before deciding whether to evacuate"
+                    ],
+                    answer: 2,
+                    case: 'In 2003 at a construction site in Shenzhen, the project manager <u>ignored typhoon warnings and evacuation requirements, failing to transfer workers to safe areas</u>. The typhoon eventually caused disasters resulting in <u>casualties</u>, and the manager was criminally detained by police.'
+                },
+                {
+                    stage: "During the Typhoon",
+                    question: 'During a typhoon, the government issues a "Five Suspensions" order (suspension of classes, work, etc.), requiring citizens not to go out unless necessary. What should individuals do? ( )',
+                    options: [
+                        'Ride an electric bike out to handle "urgent matters"',
+                        "Stay at home to avoid risks and don't go out casually",
+                        "Go out to check shop damage",
+                        "Go outdoors to shoot typhoon videos for social media"
+                    ],
+                    answer: 1,
+                    case: 'During Typhoon "Chaba", a man in Dongguan <u>ignored the "Five Suspensions" order and insisted on riding an electric bike out</u>. He was hit by a tree blown down by strong winds, resulting in <u>subarachnoid hemorrhage, skull fracture, and severe coma</u>.'
+                },
+                {
+                    stage: "During the Typhoon",
+                    question: "When a typhoon causes severe outdoor flooding and you discover unknown water accumulation on the road, what is the correct action? ( )",
+                    options: [
+                        "Wade through quickly to save time",
+                        "Use a stick to test the water depth then pass slowly",
+                        "Take a detour or wait for the water to recede",
+                        "Ride an electric bike and speed through the water"
+                    ],
+                    answer: 2,
+                    case: 'Flooding during typhoons often comes with hidden dangers such as washed-away manhole covers and fallen live wires. Some people have <u>blindly waded through water and fell into pits with missing manhole covers, getting injured</u>, while others have <u>died from electrocution after touching live wires in the water</u>.'
+                },
+                {
+                    stage: "During the Typhoon",
+                    question: 'During a typhoon at the seaside, when hearing police repeatedly broadcasting "stay away from the coastal area", what action should be taken? ( )',
+                    options: [
+                        "Stay on the shore to shoot videos of huge waves",
+                        "Bring children close to the shore to watch waves for photos",
+                        "Immediately evacuate to a safe area away from the coast",
+                        "Stay in low-lying areas on the shore to avoid wind and rain"
+                    ],
+                    answer: 2,
+                    case: 'During Typhoon "Chaba", two women in Hong Kong <u>brought an 8-year-old boy to the shore to watch waves, ignoring warnings</u>. They were knocked down by huge waves, causing <u>scratches on the boy\'s hands and feet</u>. The two women were arrested by police on suspicion of "child abuse or neglect".'
+                },
+                {
+                    stage: "During the Typhoon",
+                    question: "When a typhoon causes a power outage at home and you use a diesel generator for electricity, which of the following practices is correct? ( )",
+                    options: [
+                        "Place it in the living room for convenient wiring",
+                        "Put it on a sealed balcony to prevent rain",
+                        "Place it in a ventilated outdoor area or terrace",
+                        "Move it into the bedroom for easy monitoring at night"
+                    ],
+                    answer: 2,
+                    case: 'During Typhoon "Matmo", a family in Zhanjiang, Guangdong used a diesel generator due to power outage. <u>They placed it indoors without paying attention to ventilation</u>, resulting in <u>carbon monoxide poisoning for a family of seven, with 1 death and 6 hospitalizations</u>. Poor ventilation is the main cause of such accidents.'
+                },
+                {
+                    stage: "During the Typhoon",
+                    question: "When indoors during a typhoon and you notice a billboard outside the window shaking violently, what should you do immediately? ( )",
+                    options: [
+                        "Approach the window to shoot a video",
+                        "Quickly evacuate to an interior wall away from windows",
+                        "Call property management to handle it",
+                        "Open the window to observe the billboard situation"
+                    ],
+                    answer: 1,
+                    case: 'During typhoons, billboards are often blown down by strong winds. There have been cases where billboards fell and crashed through residents\' windows, with <u>flying glass shards causing injuries to people indoors</u>. Staying away from windows can avoid being hurt by falling objects and broken glass.'
+                },
+                {
+                    stage: "During the Typhoon",
+                    question: "When a typhoon causes a flash flood warning in mountainous areas and you are walking on a mountain path, how should you escape? ( )",
+                    options: [
+                        "Run downstream along the valley following the water flow",
+                        "Climb to high ground on steep slopes on both sides of the valley",
+                        "Hide in a cave in the valley temporarily",
+                        "Stay in place and wait for the flash flood to pass"
+                    ],
+                    answer: 1,
+                    case: 'In 2023, Typhoon "Haikui" triggered flash floods in Yongtai County, Fujian. Fire rescue personnel <u>suddenly encountered a flash flood outbreak</u> during response operations. Despite rescue efforts, <u>team members sacrificed their lives</u>. Such cases warn that during flash floods, one must move to higher ground to avoid danger.'
+                },
+                {
+                    stage: "After the Typhoon",
+                    question: "After a typhoon, when you find a large tree by the roadside obviously tilting, what is the correct way to handle it? ( )",
+                    options: [
+                        "Approach to observe the trunk fracture",
+                        "Take a detour to stay away and call emergency services",
+                        "Organize passersby to work together to straighten the tree",
+                        "Ignore the risk and pass normally"
+                    ],
+                    answer: 1,
+                    case: 'After typhoons, trees often tilt due to loose roots. There have been cases where tilted trees suddenly fell in subsequent light winds, <u>hitting electric bike riders passing by and causing injuries</u>. Reporting in time rather than approaching to check can avoid risks.'
+                },
+                {
+                    stage: "After the Typhoon",
+                    question: "After a typhoon, when participating in outdoor cleanup work and discovering a missing manhole cover under water accumulation, what should you do first? ( )",
+                    options: [
+                        "Jump into the water to find the manhole cover location",
+                        "Set up warning signs around to alert passersby",
+                        "Wait for municipal personnel to discover it themselves",
+                        "Simply cover it with branches and leave"
+                    ],
+                    answer: 1,
+                    case: 'Water accumulation caused by typhoons often conceals missing manhole covers. There have been cases where people <u>waded through water without noticing the hazard and fell into manholes as deep as over 10 meters</u>, ultimately <u>dying tragically</u>. Setting up warning signs is a key step to prevent others from encountering danger.'
+                },
+                {
+                    stage: "After the Typhoon",
+                    question: "After a typhoon, when returning to work and construction workers enter a site that was flooded, what is the primary operation? ( )",
+                    options: [
+                        "Immediately start cleaning construction materials",
+                        "Check construction equipment for electrical leakage",
+                        "Organize the disrupted construction site",
+                        "Change wet work clothes"
+                    ],
+                    answer: 1,
+                    case: 'Electrical equipment soaked in floodwater is extremely prone to leakage. There have been cases where workers <u>touched damp construction machinery without inspection when returning to work</u>, resulting in <u>electric shock injuries</u>. Checking for electrical leakage risks first is a necessary safety measure before resuming work.'
+                },
+                {
+                    stage: "After the Typhoon",
+                    question: "After a typhoon, when you find fallen power lines outdoors, what is the correct way to handle it? ( )",
+                    options: [
+                        "Use an insulated wooden stick to move the wire to the roadside",
+                        "Approach to check if the wire is still live",
+                        "Stay away from the scene and immediately call the power department",
+                        "Notify neighbors to clean up the scene together"
+                    ],
+                    answer: 2,
+                    case: 'During Typhoon "Bebinca", a 10kV power line fell to the ground in Kunshan, Jiangsu. Two passing residents <u>approached and made contact</u>, resulting in <u>death by electrocution</u>. Such accidents are all caused by not staying away from live wires and not reporting in time.'
+                },
+                {
+                    stage: "After the Typhoon",
+                    question: "After a typhoon, when entering a house that was flooded, what is the primary concern? ( )",
+                    options: [
+                        "Check if property is missing",
+                        "Cut off the power supply before entering indoors",
+                        "Immediately clean up floor water accumulation",
+                        "Check wall and furniture damage"
+                    ],
+                    answer: 1,
+                    case: 'In Daishan, Zhejiang, a typhoon caused heavy rainfall, and rainwater flooded into a house, submerging a power strip under the bedroom bed. Because <u>the power was not cut off first</u>, a pair of brothers surnamed Li in the house <u>died from electrocution</u>. Such electrical leakage risks are extremely common after flooding.'
+                },
+                {
+                    stage: "After the Typhoon",
+                    question: "Just after a typhoon passes and sea waves have not completely calmed down, what should individuals do at this time? ( )",
+                    options: [
+                        "Take advantage of the clearing weather to swim in the sea",
+                        "Take a fishing boat out to sea to fish",
+                        "Stay away from the seaside and don't go into the water without permission",
+                        "Go to the seaside to pick up items washed up by waves"
+                    ],
+                    answer: 2,
+                    case: 'In Sanya, Hainan, a man <u>insisted on swimming in the sea despite dissuasion when the typhoon had just passed and sea waves were still large</u>, ultimately <u>drowning tragically</u>. Despite full rescue efforts by the public and medical personnel, his life could not be saved.'
+                },
+                {
+                    stage: "After the Typhoon",
+                    question: 'During a typhoon, the government issues a "Five Suspensions" order (suspension of classes, work, etc.), requiring citizens not to go out unless necessary. What should individuals do? ( )',
+                    options: [
+                        'Ride an electric bike out to handle "urgent matters"',
+                        "Stay at home to avoid risks and don't go out casually",
+                        "Go out to check shop damage",
+                        "Go outdoors to shoot typhoon videos for social media"
+                    ],
+                    answer: 1,
+                    case: 'During Typhoon "Chaba", a man in Dongguan <u>ignored the "Five Suspensions" order and insisted on riding an electric bike out</u>. He was hit by a tree blown down by strong winds, resulting in <u>subarachnoid hemorrhage, skull fracture, and severe coma</u>.'
+                }
+            ];
+
+            // 当前使用的问题数据
+            let questions = questionsZh;
+
+            // 初始化显示引言
+            typeNextIntro();
+            
+            // 引言部分点击交互
+            introContainer.addEventListener('click', function(e) {
+                // 避免点击按钮时触发
+                if (e.target === startBtn || e.target.parentNode === startBtn) return;
+                
+                if (isTyping) {
+                    completeTyping();
+                    return;
+                }
+                
+                currentIntroIndex++;
+                if (currentIntroIndex < storyData.length) {
+                    if (currentIntroIndex === storyData.length - 1) {
+                        clickHint.style.display = 'none';
+                    } else {
+                        clickHint.style.display = 'block';
+                    }
+                    typeNextIntro();
+                }
+            });
+            
+            // 开始按钮点击事件 - 进入问答环节
+            startBtn.addEventListener('click', function() {
+                introContainer.style.display = 'none';
+                questionSection.style.display = 'block';
+                displayQuestion(currentQuestionIndex);
+            });
+            
+            // 逐字显示引言
+            function typeNextIntro() {
+                isTyping = true;
+                textContainer.innerHTML = '';
+                const text = storyData[currentIntroIndex];
+                
+                // 添加光标
+                const cursor = document.createElement('span');
+                cursor.className = 'typing-cursor';
+                textContainer.appendChild(cursor);
+                
+                // 开始打字
+                typeCharacter(text, 0, cursor);
+                
+                // 最后一句时显示手机和按钮
+                if (currentIntroIndex === storyData.length - 1) {
+                    setTimeout(() => {
+                        if (!isTyping) { 
+                            phoneContainer.style.display = 'block';
+                            setTimeout(() => {
+                                phoneContainer.classList.add('visible');
+                                centralButton.style.display = 'block';
+                                setTimeout(() => centralButton.classList.add('visible'), 200);
+                            }, 100);
+                        }
+                    }, text.length * 50);
+                }
+            }
+            
+            // 逐字处理
+            function typeCharacter(text, index, cursor) {
+                if (index < text.length) {
+                    // 关键词高亮处理
+                    if (text.substring(index, index + 2) === '台风') {
+                        textContainer.insertBefore(
+                            createHighlightSpan('台风'),
+                            cursor
+                        );
+                        setTimeout(() => typeCharacter(text, index + 2, cursor), 50);
+                        return;
+                    } else if (text.substring(index, index + 4) === '一周之前') {
+                        textContainer.insertBefore(
+                            createHighlightSpan('一周之前', 'text-danger'),
+                            cursor
+                        );
+                        setTimeout(() => typeCharacter(text, index + 4, cursor), 50);
+                        return;
+                    } else if (text.substring(index, index + 5) === '拯救所有人') {
+                        textContainer.insertBefore(
+                            createHighlightSpan('拯救所有人'),
+                            cursor
+                        );
+                        setTimeout(() => typeCharacter(text, index + 5, cursor), 50);
+                        return;
+                    } else if (text.substring(index, index + 6) === '缺乏安全知识') {
+                        textContainer.insertBefore(
+                            createHighlightSpan('缺乏安全知识', 'text-highlight font-bold'),
+                            cursor
+                        );
+                        setTimeout(() => typeCharacter(text, index + 6, cursor), 50);
+                        return;
+                    } else if (text.substring(index, index + 5) === '可怕的错误') {
+                        textContainer.insertBefore(
+                            createHighlightSpan('可怕的错误', 'text-highlight font-bold'),
+                            cursor
+                        );
+                        setTimeout(() => typeCharacter(text, index + 5, cursor), 50);
+                        return;
+                    }
+                    
+                    // 普通字符
+                    const charSpan = document.createElement('span');
+                    charSpan.textContent = text[index];
+                    textContainer.insertBefore(charSpan, cursor);
+                    setTimeout(() => typeCharacter(text, index + 1, cursor), 50);
+                } else {
+                    isTyping = false;
+                    
+                    // 最后一句处理
+                    if (currentIntroIndex === storyData.length - 1) {
+                        phoneContainer.style.display = 'block';
+                        setTimeout(() => {
+                            phoneContainer.classList.add('visible');
+                            centralButton.style.display = 'block';
+                            setTimeout(() => centralButton.classList.add('visible'), 200);
+                        }, 100);
+                    }
+                }
+            }
+            
+            // 创建高亮文本
+            function createHighlightSpan(text, colorClass = 'text-primary font-bold') {
+                const span = document.createElement('span');
+                span.className = colorClass;
+                span.textContent = text;
+                return span;
+            }
+            
+            // 完成当前打字
+            function completeTyping() {
+                const cursor = textContainer.querySelector('.typing-cursor');
+                if (cursor) cursor.remove();
+
+                // 显示完整文本（包含高亮）
+                let fullText = storyData[currentIntroIndex]
+                    .replace('台风', '<span class="text-primary font-bold">台风</span>')
+                    .replace('一周之前', '<span class="text-danger font-bold">一周之前</span>')
+                    .replace('拯救所有人', '<span class="text-primary font-bold">拯救所有人</span>')
+                    .replace('缺乏安全知识', '<span class="text-highlight font-bold">缺乏安全知识</span>')
+                    .replace('可怕的错误', '<span class="text-highlight font-bold">可怕的错误</span>');
+                textContainer.innerHTML = fullText;
+
+                isTyping = false;
+
+                // 最后一段处理：显示手机和按钮，隐藏点击提示
+                if (currentIntroIndex === storyData.length - 1) {
+                    clickHint.style.display = 'none'; // 隐藏点击提示
+                    phoneContainer.style.display = 'block';
+                    setTimeout(() => {
+                        phoneContainer.classList.add('visible');
+                        centralButton.style.display = 'block';
+                        setTimeout(() => centralButton.classList.add('visible'), 200);
+                    }, 100);
+                } else {
+                    // 不是最后一段：隐藏手机和按钮，显示点击提示
+                    clickHint.style.display = 'block'; // 显示点击提示
+                    phoneContainer.classList.remove('visible');
+                    centralButton.classList.remove('visible');
+                    setTimeout(() => {
+                        phoneContainer.style.display = 'none';
+                        centralButton.style.display = 'none';
+                    }, 500);
+                }
+            }
+            
+            // 显示问题
+            function displayQuestion(index) {
+                const question = questions[index];
+                const t = translations[currentLanguage];
+
+                // 根据题目索引切换背景
+                if (index >= 0 && index <= 4) {
+                    // 第1-5题：台风之前
+                    changeBackground('before');
+                } else if (index >= 5 && index <= 10) {
+                    // 第6-11题：台风来临时
+                    changeBackground('during');
+                } else if (index >= 11 && index <= 17) {
+                    // 第12-18题：台风之后
+                    changeBackground('after');
+                }
+
+                // 更新阶段标题
+                stageTitleEl.textContent = question.stage;
+
+                // 更新问题标题
+                questionTitleEl.textContent = question.question;
+
+                // 清空选项容器
+                optionsContainerEl.innerHTML = '';
+                selectedOption = null;
+
+                // 生成选项
+                question.options.forEach((option, i) => {
+                    const optionEl = document.createElement('div');
+                    optionEl.className = 'option';
+                    optionEl.innerHTML = `
+                        <span class="option-letter">${String.fromCharCode(65 + i)}</span>
+                        <span class="option-text">${option}</span>
+                    `;
+
+                    // 选项点击事件
+                    optionEl.addEventListener('click', () => {
+                        document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                        optionEl.classList.add('selected');
+                        selectedOption = i;
+
+                        setTimeout(() => checkAnswer(index, i), 300);
+                    });
+
+                    optionsContainerEl.appendChild(optionEl);
+                });
+
+                // 更新进度
+                const currentQuestionText = currentLanguage === 'zh' ?
+                    `${t.currentQuestion} ${index + 1} ${t.questionUnit}` :
+                    `${t.currentQuestion} ${index + 1}`;
+                currentQuestionEl.textContent = currentQuestionText;
+                progressFillEl.style.width = `${((index + 1) / questions.length) * 100}%`;
+            }
+            
+            // 检查答案 - 错误答案不进入下一题
+            function checkAnswer(questionIndex, selectedIndex) {
+                const question = questions[questionIndex];
+                const t = translations[currentLanguage];
+                const isCorrect = selectedIndex === question.answer;
+
+                if (isCorrect) {
+                    feedbackTitleEl.textContent = t.correctTitle;
+                    feedbackTitleEl.className = "feedback-title feedback-success";
+                    feedbackMessageEl.textContent = t.correctMessage;
+
+                    // 显示优化后的案例
+                    caseExampleEl.innerHTML = question.case;
+                    caseExampleEl.classList.remove('hidden');
+                } else {
+                    feedbackTitleEl.textContent = t.wrongTitle;
+                    feedbackTitleEl.className = "feedback-title feedback-error";
+                    feedbackMessageEl.textContent = t.wrongMessage;
+
+                    // 隐藏案例
+                    caseExampleEl.classList.add('hidden');
+                }
+
+                feedbackModalEl.classList.add('visible');
+            }
+            
+            // 继续按钮事件 - 只有正确答案才进入下一题
+            feedbackContinueBtn.addEventListener('click', () => {
+                feedbackModalEl.classList.remove('visible');
+
+                // 检查当前答案是否正确
+                if (selectedOption === questions[currentQuestionIndex].answer) {
+                    // 正确答案 - 判断是否是最后一题
+                    if (currentQuestionIndex < questions.length - 1) {
+                        currentQuestionIndex++;
+                        displayQuestion(currentQuestionIndex);
+                        updateBackButton(); // 更新返回按钮状态
+                    } else {
+                        // 显示完成页面
+                        questionSection.style.display = 'none';
+                        completionSection.style.display = 'block';
+                        changeBackground('after'); // 切换到台风之后的背景
+                        backButton.classList.add('visible'); // 完成页面也显示返回按钮
+                    }
+                } else {
+                    // 错误答案 - 重新显示当前题
+                    displayQuestion(currentQuestionIndex);
+                }
+            });
+
+            // 语言切换功能
+            languageToggle.addEventListener('click', () => {
+                if (currentLanguage === 'zh') {
+                    currentLanguage = 'en';
+                    switchLanguage('en');
+                } else {
+                    currentLanguage = 'zh';
+                    switchLanguage('zh');
+                }
+            });
+
+            // 切换语言函数
+            function switchLanguage(lang) {
+                const t = translations[lang];
+
+                // 更新语言按钮文本
+                languageText.textContent = t.languageButton;
+
+                // 更新标题
+                document.querySelector('.fixed-header h1').textContent = t.title;
+                document.querySelector('.fixed-header p').textContent = t.subtitle;
+
+                // 更新点击提示
+                clickHint.innerHTML = t.clickHint + ' <i class="fa fa-hand-pointer-o"></i>';
+
+                // 更新开始按钮
+                startBtn.innerHTML = t.startButton + ' <i class="fa fa-arrow-right ml-2"></i>';
+
+                // 更新问题数据
+                questions = lang === 'zh' ? questionsZh : questionsEn;
+                storyData = t.story;
+
+                // 更新进度文本
+                const totalQuestionsText = lang === 'zh' ?
+                    `${t.totalQuestions} ${questions.length} ${t.questionsUnit}` :
+                    `${t.totalQuestions} ${questions.length} ${t.questionsUnit}`;
+                document.getElementById('total-questions').textContent = totalQuestionsText;
+
+                // 更新当前问题文本
+                const currentQuestionText = lang === 'zh' ?
+                    `${t.currentQuestion} ${currentQuestionIndex + 1} ${t.questionUnit}` :
+                    `${t.currentQuestion} ${currentQuestionIndex + 1}`;
+                currentQuestionEl.textContent = currentQuestionText;
+
+                // 更新反馈按钮
+                feedbackContinueBtn.textContent = t.continueButton;
+
+                // 更新完成页面
+                document.querySelector('.completion-title').textContent = t.completionTitle;
+                document.querySelector('.completion-message').textContent = t.completionMessage;
+                document.querySelector('.completion-important').innerHTML = t.completionImportant;
+                document.querySelector('.project-info').textContent = t.projectInfo;
+                document.querySelector('.team-members').textContent = t.teamMembers;
+                document.querySelector('.advisors').textContent = t.advisors;
+                document.querySelector('.contact-info').textContent = t.contactInfo;
+
+                // 更新手机界面
+                document.getElementById('phone-date').textContent = t.phone.date;
+                document.getElementById('phone-sender').textContent = t.phone.sender;
+                document.getElementById('phone-time').textContent = t.phone.time;
+                document.getElementById('phone-title').textContent = t.phone.title;
+                document.getElementById('phone-warning-level').textContent = t.phone.warningLevel;
+                document.getElementById('phone-warning-time').textContent = t.phone.warningTime;
+                document.getElementById('phone-warning-content').textContent = t.phone.warningContent;
+
+                // 如果在引言页面，重新显示当前引言
+                if (introContainer.style.display !== 'none') {
+                    if (!isTyping) {
+                        completeTyping();
+                    }
+                }
+
+                // 如果在问题页面，重新显示当前问题
+                if (questionSection.style.display === 'block') {
+                    displayQuestion(currentQuestionIndex);
+                }
+            }
+
+            // 返回按钮功能
+            backButton.addEventListener('click', () => {
+                if (completionSection.style.display === 'block') {
+                    // 从完成页面返回到最后一题
+                    completionSection.style.display = 'none';
+                    questionSection.style.display = 'block';
+                    displayQuestion(currentQuestionIndex); // 重新显示当前题目（会自动切换背景）
+                } else if (questionSection.style.display === 'block') {
+                    // 从问题页面返回上一题或引言
+                    if (currentQuestionIndex > 0) {
+                        currentQuestionIndex--;
+                        displayQuestion(currentQuestionIndex); // 会自动切换背景
+                        updateBackButton();
+                    } else {
+                        // 返回引言页面（文字引言的最后一段）
+                        questionSection.style.display = 'none';
+                        introContainer.style.display = 'block';
+                        changeBackground('intro'); // 切换回前情故事背景
+                        updateBackButton(); // 更新返回按钮状态（前言页面也显示返回按钮）
+                        // 重置引言到最后一段
+                        currentIntroIndex = storyData.length - 1;
+                        completeTyping();
+                    }
+                } else if (introContainer.style.display !== 'none') {
+                    // 在引言页面（包括初始状态和文字引言）
+                    if (currentIntroIndex > 0) {
+                        // 如果在文字引言中，返回上一段
+                        currentIntroIndex--;
+                        completeTyping();
+                    } else {
+                        // 如果在初始状态（currentIntroIndex === 0），返回到手机+按钮的初始界面
+                        // 重置到初始状态
+                        phoneContainer.classList.add('visible');
+                        centralButton.style.display = 'block';
+                        setTimeout(() => centralButton.classList.add('visible'), 200);
+                        // 隐藏文字内容
+                        const textContainer = document.getElementById('text-container');
+                        textContainer.innerHTML = '';
+                        // 保持返回按钮可见
+                        updateBackButton();
+                    }
+                }
+            });
+
+            // 更新返回按钮显示状态
+            function updateBackButton() {
+                // 检查是否在引言页面（包括初始状态）
+                const isIntroVisible = introContainer.style.display !== 'none';
+                const isQuestionVisible = questionSection.style.display === 'block';
+                const isCompletionVisible = completionSection.style.display === 'block';
+
+                if (isIntroVisible || isQuestionVisible || isCompletionVisible) {
+                    backButton.classList.add('visible');
+                } else {
+                    backButton.classList.remove('visible');
+                }
+            }
+
+            // 开始按钮点击时显示返回按钮
+            const originalStartBtnClick = startBtn.onclick;
+            startBtn.addEventListener('click', () => {
+                updateBackButton();
+            });
+
+            // 初始化时更新返回按钮状态（前言页面显示返回按钮）
+            updateBackButton();
+        });
+    </script>
+</body>
+
+</html>
